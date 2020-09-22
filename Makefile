@@ -54,3 +54,7 @@ check-fmt:
 
 .PHONY: check
 check: check-fmt lint
+
+.PHONY: tests
+tests:
+	ginkgo pkg/...
