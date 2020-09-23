@@ -55,6 +55,11 @@ check-fmt:
 .PHONY: check
 check: check-fmt lint
 
+.PHONY: seed
+seed:
+	@echo "Running seed script"
+	@./hack/seed.sh
+
 .PHONY: tests
-tests:
+tests: seed
 	ginkgo pkg/...

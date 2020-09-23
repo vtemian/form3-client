@@ -1,0 +1,25 @@
+{
+  "data": {
+    "id": "036bb67e-5bab-487d-8353-bb03d90fff23",
+    "organisation_id": "721763e9-b2e2-4ebb-8de9-b440e3cf23a6",
+    "type": "accounts",
+    "attributes": {
+      "country": "GB",
+      "base_currency": "GBP",
+      "bank_id": "400302",
+      "bank_id_code": "GBDSC",
+      "customer_id": "234",
+      "bic": "NWBKGB42",
+      "name": [
+        "Samantha Holder"
+      ],
+      "alternative_names": [
+        "Sam Holder"
+      ],
+      "account_classification": "Personal",
+      "joint_account": false,
+      "account_matching_opt_out": false,
+      "secondary_identification": "A1B2C3D4"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "data": {
+    "id": "74d8c679-ed1d-4d6f-b5b3-639b386e2bd4",
+    "organisation_id": "721763e9-b2e2-4ebb-8de9-b440e3cf23a6",
+    "type": "accounts",
+    "attributes": {
+      "country": "GB",
+      "base_currency": "GBP",
+      "bank_id": "400302",
+      "bank_id_code": "GBDSC",
+      "account_number": "10000004",
+      "customer_id": "234",
+      "iban": "GB28NWBK40030212764204",
+      "bic": "NWBKGB42",
+      "account_classification": "Personal"
+    }
+  }
+}
