@@ -32,3 +32,7 @@ type Account struct {
 	OrganisationResource
 	AccountAttributes
 }
+
+func (a *Account) GetID() string {
+	return a.ID
+}
