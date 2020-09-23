@@ -28,7 +28,7 @@ func loadFixture(path string, result *api.DataObject) error {
 	return json.Unmarshal(byteValue, result)
 }
 
-func loadFixtures(kind string) []*api.DataObject {
+func loadFixtures(kind api.Object) []*api.DataObject {
 	var files []string
 
 	root := os.Getenv("FIXTURES_PATH")
@@ -37,7 +37,7 @@ func loadFixtures(kind string) []*api.DataObject {
 	}
 
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if strings.Contains(path, fmt.Sprintf("_%s_", kind)) {
+		if strings.Contains(path, fmt.Sprintf("_%s_", api.Schema.TypeName(kind))) {
 			files = append(files, path)
 		}
 		return nil
@@ -49,15 +49,19 @@ func loadFixtures(kind string) []*api.DataObject {
 	var objs []*api.DataObject
 
 	for _, file := range files {
-		obj := &api.DataObject{ Data: api.Account{} }
+		obj, err := api.Schema.NewDataObj(api.Schema.TypeName(kind))
+		if err != nil {
+			// TODO: log error
+			fmt.Println(err)
+		}
+
 		if err := loadFixture(file, obj); err == nil {
 			objs = append(objs, obj)
 		} else {
+			// TODO: log error
 			fmt.Println(err)
 		}
 	}
-	fmt.Println("##############", root)
-	fmt.Printf("%v\n", objs)
 
 	return objs
 }
@@ -66,16 +70,16 @@ var _ = Describe("Form3Client", func() {
 	form3Client, _ := NewClient("http://localhost:8080")
 	var entries []TableEntry
 
-	for _, fixture := range loadFixtures("account") {
+	for _, fixture := range loadFixtures(api.Account{}) {
 		entries = append(entries, Entry(
 			fmt.Sprintf("should fetch account %s", fixture.Data.GetID()), fixture.Data.GetID(), fixture.Data))
 	}
 
 	DescribeTable("fetch account",
-		func(uuid string, expectedAccount api.Account) {
+		func(uuid string, expectedAccount *api.Account) {
 			account := &api.Account{}
 
-			err := form3Client.Fetch(context.TODO(), "test", account)
+			err := form3Client.Fetch(context.TODO(), uuid, account)
 			Expect(err).To(BeNil())
 
 			Expect(account).To(BeEquivalentTo(expectedAccount))

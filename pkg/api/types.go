@@ -40,3 +40,7 @@ func (a Account) GetID() string {
 type AccountList struct {
 	Items []Account
 }
+
+func (a AccountList) GetID() string {
+	return ""
+}
