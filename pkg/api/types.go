@@ -33,7 +33,7 @@ type Account struct {
 	AccountAttributes
 }
 
-func (a *Account) GetID() string {
+func (a Account) GetID() string {
 	return a.ID
 }
 

@@ -22,6 +22,14 @@ type Form3Client struct {
 	BaseURL string
 }
 
+type HttpClient struct {
+	HostUrl string
+}
+
+//func (h HttpClient) Execute(method string, url string, params string) error {
+//
+//}
+
 func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) error {
 	// TODO: hardcode endpoints and types for now
 	resp, err := http.Get(fmt.Sprintf("%s/v1/organisation/accounts/%s", c.BaseURL, uuid))
