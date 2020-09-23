@@ -30,7 +30,7 @@ type AccountAttributes struct {
 
 type Account struct {
 	OrganisationResource
-	AccountAttributes
+	Attributes AccountAttributes `json:"attributes"`
 }
 
 func (a Account) GetID() string {

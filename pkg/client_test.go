@@ -52,14 +52,14 @@ func loadFixtures(kind api.Object) []*api.DataObject {
 		obj, err := api.Schema.NewDataObj(api.Schema.TypeName(kind))
 		if err != nil {
 			// TODO: log error
-			fmt.Println(err)
+			fmt.Println("errr:", err)
 		}
 
 		if err := loadFixture(file, obj); err == nil {
 			objs = append(objs, obj)
 		} else {
 			// TODO: log error
-			fmt.Println(err)
+			fmt.Println("err:", err)
 		}
 	}
 

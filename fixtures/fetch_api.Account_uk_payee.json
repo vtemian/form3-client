@@ -10,12 +10,6 @@
       "bank_id_code": "GBDSC",
       "customer_id": "234",
       "bic": "NWBKGB42",
-      "name": [
-        "Samantha Holder"
-      ],
-      "alternative_names": [
-        "Sam Holder"
-      ],
       "account_classification": "Personal",
       "joint_account": false,
       "account_matching_opt_out": false,

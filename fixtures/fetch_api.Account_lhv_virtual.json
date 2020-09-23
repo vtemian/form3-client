@@ -6,9 +6,6 @@
     "attributes": {
       "country": "GB",
       "base_currency": "GBP",
-      "name": [
-        "James Bond"
-      ],
       "bank_id": "400305",
       "bank_id_code": "GBDSC",
       "bic": "LHVBEE22",

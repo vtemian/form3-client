@@ -54,7 +54,6 @@ func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) er
 
 	// TODO: extract client logic in a separate pkg
 	parseErr := json.NewDecoder(resp.Body).Decode(&dataObj)
-	fmt.Printf("%+v\n", dataObj)
 
 	return parseErr
 }
