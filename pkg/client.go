@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/vtemian/form3/pkg/api"
 )
@@ -20,10 +21,15 @@ type Client interface {
 
 type Form3Client struct {
 	BaseURL string
+	Version string
 }
 
 type HttpClient struct {
 	HostUrl string
+}
+
+func (c *Form3Client) baseURL() string {
+	return fmt.Sprintf("%s/%s", c.BaseURL, c.Version)
 }
 
 //func (h HttpClient) Execute(method string, url string, params string) error {
@@ -32,7 +38,16 @@ type HttpClient struct {
 
 func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) error {
 	// TODO: hardcode endpoints and types for now
-	resp, err := http.Get(fmt.Sprintf("%s/v1/organisation/accounts/%s", c.BaseURL, uuid))
+	endpoint, err := api.Schema.GetEndpointForObj(obj)
+	if err != nil {
+		return err
+	}
+
+	if strings.Contains(endpoint, "%s") {
+		endpoint = fmt.Sprintf(endpoint, uuid)
+	}
+
+	resp, err := http.Get(fmt.Sprintf("%s/%s", c.baseURL(), endpoint))
 	if err != nil {
 		return err
 	}
@@ -67,5 +82,5 @@ func (c *Form3Client) Delete(ctx context.Context) {
 }
 
 func NewClient(baseURL string) (Client, error) {
-	return &Form3Client{BaseURL: baseURL}, nil
+	return &Form3Client{BaseURL: baseURL, Version: "v1"}, nil
 }

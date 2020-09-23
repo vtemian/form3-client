@@ -68,6 +68,18 @@ func (s *Scheme) NewDataObj(kind string) (*DataObject, error) {
 	return result, nil
 }
 
+func (s *Scheme) GetEndpointForObj(obj interface{}) (string, error) {
+	typeName := realTypeOf(obj).String()
+
+	endpoint, exists := s.objEndpoints[typeName]
+
+	if !exists {
+		return "", fmt.Errorf(missingObjTypeFmt, typeName)
+	}
+
+	return endpoint, nil
+}
+
 var Schema = NewScheme()
 
 func init() {
