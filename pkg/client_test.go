@@ -10,13 +10,13 @@ import (
 )
 
 var _ = Describe("Form3Client", func() {
-	form3Client, _ := NewClient()
+	form3Client, _ := NewClient("http://localhost:8080")
 
 	Describe("Fetch account", func() {
 		It("should return an account", func() {
 			account := &api.Account{}
 
-			err := form3Client.Fetch(context.TODO(), account)
+			err := form3Client.Fetch(context.TODO(), "test", account)
 			Expect(err).To(BeNil())
 		})
 	})

@@ -36,3 +36,7 @@ type Account struct {
 func (a *Account) GetID() string {
 	return a.ID
 }
+
+type AccountList struct {
+	Items []Account
+}
