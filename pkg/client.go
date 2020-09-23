@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/vtemian/form3/pkg/api"
@@ -23,7 +24,6 @@ type Form3Client struct {
 
 func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) error {
 	// TODO: hardcode endpoints and types for now
-
 	resp, err := http.Get(fmt.Sprintf("%s/v1/organisation/accounts/%s", c.BaseURL, uuid))
 	if err != nil {
 		return err
@@ -31,11 +31,22 @@ func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) er
 
 	defer resp.Body.Close()
 
+	// TODO: return standard errors
 	if resp.StatusCode != 200 {
+		body, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println(string(body))
 		return errors.New(fmt.Sprintf("missing obj identified by %s", uuid))
 	}
 
-	parseErr := json.NewDecoder(resp.Body).Decode(obj)
+	dataObj := struct {
+		Data api.Object `json:"data"`
+	}{
+		Data: obj,
+	}
+
+	// TODO: extract client logic in a separate pkg
+	parseErr := json.NewDecoder(resp.Body).Decode(&dataObj)
+	fmt.Printf("%+v\n", dataObj)
 
 	return parseErr
 }
