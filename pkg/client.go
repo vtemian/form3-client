@@ -46,11 +46,7 @@ func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) er
 		return errors.New(fmt.Sprintf("missing obj identified by %s", uuid))
 	}
 
-	dataObj := struct {
-		Data api.Object `json:"data"`
-	}{
-		Data: obj,
-	}
+	dataObj := api.WrapObject(obj)
 
 	// TODO: extract client logic in a separate pkg
 	parseErr := json.NewDecoder(resp.Body).Decode(&dataObj)

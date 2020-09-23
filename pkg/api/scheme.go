@@ -20,8 +20,16 @@ func NewScheme() *Scheme {
 }
 
 func (s *Scheme) TypeName(obj Object) string {
-	typeObj := reflect.TypeOf(obj)
+	typeObj := realTypeOf(obj)
 	return typeObj.String()
+}
+
+func realTypeOf(obj interface{}) reflect.Type {
+	if reflect.ValueOf(obj).Kind() == reflect.Ptr {
+		return reflect.Indirect(reflect.ValueOf(obj)).Type()
+	}
+
+	return reflect.TypeOf(obj)
 }
 
 func (s *Scheme) Register(obj Object, endpoint string) {

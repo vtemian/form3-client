@@ -7,3 +7,7 @@ type Object interface {
 type DataObject struct {
 	Data Object `json:"data"`
 }
+
+func WrapObject(obj Object) *DataObject {
+	return &DataObject{Data: obj}
+}
