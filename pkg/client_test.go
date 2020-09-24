@@ -52,7 +52,7 @@ func loadFixtures(kind api.Object) []*api.DataObject {
 		obj, err := api.Schema.NewDataObj(api.Schema.TypeName(kind))
 		if err != nil {
 			// TODO: log error
-			fmt.Println("errr:", err)
+			fmt.Println("err:", err)
 		}
 
 		if err := loadFixture(file, obj); err == nil {
@@ -84,4 +84,27 @@ var _ = Describe("Form3Client", func() {
 
 			Expect(account).To(BeEquivalentTo(expectedAccount))
 		}, entries...)
+
+	Describe("fetch fails", func() {
+		It("should return 404 for missing account", func() {
+			account := &api.Account{}
+
+			err := form3Client.Fetch(context.TODO(), "20dba636-7fac-4747-b27a-327ca12b9b27", account)
+			Expect(err).To(Not(BeNil()))
+		})
+
+		It("should return 400 for invalid uuid", func() {
+			account := &api.Account{}
+
+			err := form3Client.Fetch(context.TODO(), "test", account)
+			Expect(err).To(Not(BeNil()))
+		})
+
+		It("should return invalid request for missing uuid", func() {
+			account := &api.Account{}
+
+			err := form3Client.Fetch(context.TODO(), "", account)
+			Expect(err).To(Not(BeNil()))
+		})
+	})
 })
