@@ -122,8 +122,6 @@ var _ = Describe("Form3Client", func() {
 		It("should return a list of all accounts", func() {
 			accounts := &api.AccountList{}
 
-			fmt.Println("running list tests")
-
 			err := form3Client.List(context.TODO(), accounts)
 			Expect(err).ShouldNot(HaveOccurred())
 
@@ -131,5 +129,14 @@ var _ = Describe("Form3Client", func() {
 				Expect(&accounts.Items[i]).To(BeEquivalentTo((expectedAccounts[i]).(*api.Account)))
 			}
 		})
+		It("should return an error if the container is not valid", func() {
+			accounts := &api.Account{}
+
+			err := form3Client.List(context.TODO(), accounts)
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(InvalidObjectTypeErr))
+		})
+
 	})
 })

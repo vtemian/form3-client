@@ -16,8 +16,8 @@ import (
 type Client interface {
 	Fetch(context.Context, string, api.Object) error
 	List(context.Context, api.Object) error
-	Create(ctx context.Context)
-	Delete(ctx context.Context)
+	Create(context.Context)
+	Delete(context.Context, string) error
 }
 
 type Form3Client struct {
@@ -42,8 +42,10 @@ var RespErrors = map[int]string{
 	http.StatusGatewayTimeout:      "gateway timeout %s",
 }
 
-var MissingOrInvalidArgumentFmt = "missing or invalid argument: %s"
-var defaultResponseErrorFmt = "error: %s"
+var InvalidObjectTypeErr = errors.New("invalid object type")
+
+const MissingOrInvalidArgumentFmt = "missing or invalid argument: %s"
+const DefaultResponseErrorFmt = "error: %s"
 
 type errorResponse struct {
 	ErrorMessage string `json:"error_message"`
@@ -64,7 +66,7 @@ func (c *Form3Client) err(resp *http.Response) error {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf(defaultResponseErrorFmt, "couldn't read response from server")
+		return fmt.Errorf(DefaultResponseErrorFmt, "couldn't read response from server")
 	}
 
 	errMsg := ""
@@ -77,7 +79,7 @@ func (c *Form3Client) err(resp *http.Response) error {
 
 	respError, exists := RespErrors[resp.StatusCode]
 	if !exists {
-		return fmt.Errorf(defaultResponseErrorFmt, body)
+		return fmt.Errorf(DefaultResponseErrorFmt, body)
 	}
 
 	return fmt.Errorf(respError, errMsg)
@@ -126,7 +128,7 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 
 	items := v.FieldByName("Items")
 	if !items.IsValid() {
-		return errors.New("invalid object type. missing Items field")
+		return InvalidObjectTypeErr
 	}
 
 	endpoint, err := api.Schema.GetEndpointForObj(obj)
@@ -181,8 +183,8 @@ func (c *Form3Client) Create(ctx context.Context) {
 
 }
 
-func (c *Form3Client) Delete(ctx context.Context) {
-
+func (c *Form3Client) Delete(ctx context.Context, uuid string) error {
+	return nil
 }
 
 func NewClient(baseURL string) (Client, error) {
