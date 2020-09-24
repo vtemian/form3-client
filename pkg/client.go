@@ -188,6 +188,10 @@ func (c *Form3Client) Delete(ctx context.Context, obj api.Object) error {
 		return fmt.Errorf(MissingOrInvalidArgumentFmt, "ID")
 	}
 
+	if obj.GetVersion() < 0 {
+		return fmt.Errorf(MissingOrInvalidArgumentFmt, "Version")
+	}
+
 	endpoint, err := api.Schema.GetEndpointForObj(obj)
 	if err != nil {
 		return err

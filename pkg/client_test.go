@@ -161,5 +161,50 @@ var _ = Describe("Form3Client", func() {
 			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusNotFound],
 				fmt.Sprintf("record %s does not exist", account.GetID()))))
 		})
+
+		It("should return 204 for missing account", func() {
+			account := api.NewAccount("20dba636-7fac-4747-b27a-327ca12b9b27", 0)
+
+			err := form3Client.Delete(context.TODO(), account)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+
+		It("should return 400 for invalid uuid", func() {
+			account := api.NewAccount("test", 0)
+
+			err := form3Client.Delete(context.TODO(), account)
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusBadRequest],
+				"id is not a valid uuid")))
+		})
+
+		It("should return invalid request for missing uuid", func() {
+			account := &api.Account{}
+
+			err := form3Client.Delete(context.TODO(), account)
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(MissingOrInvalidArgumentFmt, "ID")))
+		})
+
+		It("should return invalid request for invalid version", func() {
+			account := api.NewAccount("20dba636-7fac-4747-b27a-327ca12b9b27", -1)
+
+			err := form3Client.Delete(context.TODO(), account)
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(MissingOrInvalidArgumentFmt, "Version")))
+		})
+
+		It("should return missing item for missing version", func() {
+			account := expectedAccounts[1].(*api.Account)
+			account.Version += 1
+
+			err := form3Client.Delete(context.TODO(), account)
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusNotFound], "invalid version")))
+		})
 	})
 })
