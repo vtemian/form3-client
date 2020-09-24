@@ -28,7 +28,7 @@ type HttpClient struct {
 	RetryCount int
 }
 
-var respErrors = map[int]string{
+var RespErrors = map[int]string{
 	http.StatusBadRequest:          "invalid request: %s",
 	http.StatusUnauthorized:        "not authorized: %s",
 	http.StatusNotFound:            "not found: %s",
@@ -37,6 +37,7 @@ var respErrors = map[int]string{
 	http.StatusGatewayTimeout:      "gateway timeout %s",
 }
 
+var MissingOrInvalidArgumentFmt = "missing or invalid argument: %s"
 var defaultResponseErrorFmt = "error: %s"
 
 type errorResponse struct {
@@ -69,16 +70,19 @@ func (c *Form3Client) err(resp *http.Response) error {
 		errMsg = errResponse.ErrorMessage
 	}
 
-	respError, exists := respErrors[resp.StatusCode]
+	respError, exists := RespErrors[resp.StatusCode]
 	if !exists {
 		return fmt.Errorf(defaultResponseErrorFmt, body)
 	}
 
 	return fmt.Errorf(respError, errMsg)
-
 }
 
 func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) error {
+	if uuid == "" {
+		return fmt.Errorf(MissingOrInvalidArgumentFmt, "uuid")
+	}
+
 	endpoint, err := api.Schema.GetEndpointForObj(obj)
 	if err != nil {
 		return err

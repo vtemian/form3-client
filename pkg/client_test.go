@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -80,7 +81,7 @@ var _ = Describe("Form3Client", func() {
 			account := &api.Account{}
 
 			err := form3Client.Fetch(context.TODO(), uuid, account)
-			Expect(err).To(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(account).To(BeEquivalentTo(expectedAccount))
 		}, entries...)
@@ -90,21 +91,29 @@ var _ = Describe("Form3Client", func() {
 			account := &api.Account{}
 
 			err := form3Client.Fetch(context.TODO(), "20dba636-7fac-4747-b27a-327ca12b9b27", account)
-			Expect(err).To(Not(BeNil()))
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusNotFound],
+				"record 20dba636-7fac-4747-b27a-327ca12b9b27 does not exist")))
 		})
 
 		It("should return 400 for invalid uuid", func() {
 			account := &api.Account{}
 
 			err := form3Client.Fetch(context.TODO(), "test", account)
-			Expect(err).To(Not(BeNil()))
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusBadRequest],
+				"id is not a valid uuid")))
 		})
 
 		It("should return invalid request for missing uuid", func() {
 			account := &api.Account{}
 
 			err := form3Client.Fetch(context.TODO(), "", account)
-			Expect(err).To(Not(BeNil()))
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(MissingOrInvalidArgumentFmt, "uuid")))
 		})
 	})
 })
