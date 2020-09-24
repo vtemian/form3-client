@@ -2,6 +2,7 @@ package api
 
 type Object interface {
 	GetID() string
+	GetVersion() int
 }
 
 type DataObject struct {

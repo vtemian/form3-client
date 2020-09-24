@@ -14,10 +14,10 @@ import (
 )
 
 type Client interface {
-	Fetch(context.Context, string, api.Object) error
+	Fetch(context.Context, api.Object) error
 	List(context.Context, api.Object) error
 	Create(context.Context)
-	Delete(context.Context, string) error
+	Delete(context.Context, api.Object) error
 }
 
 type Form3Client struct {
@@ -85,8 +85,8 @@ func (c *Form3Client) err(resp *http.Response) error {
 	return fmt.Errorf(respError, errMsg)
 }
 
-func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) error {
-	if uuid == "" {
+func (c *Form3Client) Fetch(ctx context.Context, obj api.Object) error {
+	if obj.GetID() == "" {
 		return fmt.Errorf(MissingOrInvalidArgumentFmt, "uuid")
 	}
 
@@ -96,7 +96,7 @@ func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) er
 	}
 
 	if strings.Contains(endpoint, "%s") {
-		endpoint = fmt.Sprintf(endpoint, uuid)
+		endpoint = fmt.Sprintf(endpoint, obj.GetID())
 	}
 
 	resp, err := http.Get(fmt.Sprintf("%s/%s", c.baseURL(), endpoint))
@@ -183,7 +183,38 @@ func (c *Form3Client) Create(ctx context.Context) {
 
 }
 
-func (c *Form3Client) Delete(ctx context.Context, uuid string) error {
+func (c *Form3Client) Delete(ctx context.Context, obj api.Object) error {
+	if obj.GetID() == "" {
+		return fmt.Errorf(MissingOrInvalidArgumentFmt, "ID")
+	}
+
+	endpoint, err := api.Schema.GetEndpointForObj(obj)
+	if err != nil {
+		return err
+	}
+
+	if strings.Contains(endpoint, "%s") {
+		endpoint = fmt.Sprintf(endpoint, obj.GetID())
+	}
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s?version=%d", c.baseURL(), endpoint, obj.GetVersion()), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if !c.isOK(resp) {
+		return c.err(resp)
+	}
+
 	return nil
 }
 

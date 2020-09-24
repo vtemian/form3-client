@@ -30,11 +30,27 @@ type AccountAttributes struct {
 
 type Account struct {
 	OrganisationResource
+
 	Attributes AccountAttributes `json:"attributes"`
 }
 
 func (a Account) GetID() string {
 	return a.ID
+}
+
+func (a Account) GetVersion() int {
+	return a.Version
+}
+
+func NewAccount(ID string, version int) Account {
+	return Account{
+		OrganisationResource: OrganisationResource{
+			Resource: Resource{
+				ID:      ID,
+				Version: version,
+			},
+		},
+	}
 }
 
 type AccountList struct {
@@ -43,4 +59,8 @@ type AccountList struct {
 
 func (a AccountList) GetID() string {
 	return ""
+}
+
+func (a AccountList) GetVersion() int {
+	return 0
 }

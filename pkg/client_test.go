@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -74,24 +75,24 @@ var _ = Describe("Form3Client", func() {
 	var entries []TableEntry
 	for _, fixture := range expectedAccounts {
 		entries = append(entries, Entry(
-			fmt.Sprintf("should fetch account %s", fixture.GetID()), fixture.GetID(), fixture))
+			fmt.Sprintf("should fetch account %s", fixture.GetID()), fixture))
 	}
 
 	DescribeTable("fetch account",
-		func(uuid string, expectedAccount *api.Account) {
-			account := &api.Account{}
+		func(expectedAccount *api.Account) {
+			account := api.NewAccount(expectedAccount.GetID(), expectedAccount.GetVersion())
 
-			err := form3Client.Fetch(context.TODO(), uuid, account)
+			err := form3Client.Fetch(context.TODO(), &account)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(account).To(BeEquivalentTo(expectedAccount))
+			Expect(&account).To(BeEquivalentTo(expectedAccount))
 		}, entries...)
 
 	Describe("fetch fails", func() {
 		It("should return 404 for missing account", func() {
-			account := &api.Account{}
+			account := api.NewAccount("20dba636-7fac-4747-b27a-327ca12b9b27", 0)
 
-			err := form3Client.Fetch(context.TODO(), "20dba636-7fac-4747-b27a-327ca12b9b27", account)
+			err := form3Client.Fetch(context.TODO(), account)
 			Expect(err).Should(HaveOccurred())
 
 			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusNotFound],
@@ -99,9 +100,9 @@ var _ = Describe("Form3Client", func() {
 		})
 
 		It("should return 400 for invalid uuid", func() {
-			account := &api.Account{}
+			account := api.NewAccount("test", 0)
 
-			err := form3Client.Fetch(context.TODO(), "test", account)
+			err := form3Client.Fetch(context.TODO(), account)
 			Expect(err).Should(HaveOccurred())
 
 			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusBadRequest],
@@ -111,7 +112,7 @@ var _ = Describe("Form3Client", func() {
 		It("should return invalid request for missing uuid", func() {
 			account := &api.Account{}
 
-			err := form3Client.Fetch(context.TODO(), "", account)
+			err := form3Client.Fetch(context.TODO(), account)
 			Expect(err).Should(HaveOccurred())
 
 			Expect(err).To(BeEquivalentTo(fmt.Errorf(MissingOrInvalidArgumentFmt, "uuid")))
@@ -125,6 +126,13 @@ var _ = Describe("Form3Client", func() {
 			err := form3Client.List(context.TODO(), accounts)
 			Expect(err).ShouldNot(HaveOccurred())
 
+			sort.Slice(accounts.Items, func(i, j int) bool {
+				return accounts.Items[i].GetID() < accounts.Items[j].GetID()
+			})
+			sort.Slice(expectedAccounts, func(i, j int) bool {
+				return expectedAccounts[i].GetID() < expectedAccounts[j].GetID()
+			})
+
 			for i := range expectedAccounts {
 				Expect(&accounts.Items[i]).To(BeEquivalentTo((expectedAccounts[i]).(*api.Account)))
 			}
@@ -137,6 +145,21 @@ var _ = Describe("Form3Client", func() {
 
 			Expect(err).To(BeEquivalentTo(InvalidObjectTypeErr))
 		})
+		// TODO: add tests regarding pagination
+	})
 
+	Describe("delete account", func() {
+		It("should delete an account", func() {
+			account := expectedAccounts[0].(*api.Account)
+
+			err := form3Client.Delete(context.TODO(), *account)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			err = form3Client.Fetch(context.TODO(), account)
+			Expect(err).Should(HaveOccurred())
+
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusNotFound],
+				fmt.Sprintf("record %s does not exist", account.GetID()))))
+		})
 	})
 })
