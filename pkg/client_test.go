@@ -29,7 +29,7 @@ func loadFixture(path string, result *api.DataObject) error {
 	return json.Unmarshal(byteValue, result)
 }
 
-func loadFixtures(kind api.Object) []*api.DataObject {
+func loadFixtures(kind api.Object) []api.Object {
 	var files []string
 
 	root := os.Getenv("FIXTURES_PATH")
@@ -47,7 +47,7 @@ func loadFixtures(kind api.Object) []*api.DataObject {
 		panic(err)
 	}
 
-	var objs []*api.DataObject
+	var objs []api.Object
 
 	for _, file := range files {
 		obj, err := api.Schema.NewDataObj(api.Schema.TypeName(kind))
@@ -57,7 +57,7 @@ func loadFixtures(kind api.Object) []*api.DataObject {
 		}
 
 		if err := loadFixture(file, obj); err == nil {
-			objs = append(objs, obj)
+			objs = append(objs, obj.Data)
 		} else {
 			// TODO: log error
 			fmt.Println("err:", err)
@@ -69,11 +69,12 @@ func loadFixtures(kind api.Object) []*api.DataObject {
 
 var _ = Describe("Form3Client", func() {
 	form3Client, _ := NewClient("http://localhost:8080")
-	var entries []TableEntry
+	expectedAccounts := loadFixtures(api.Account{})
 
-	for _, fixture := range loadFixtures(api.Account{}) {
+	var entries []TableEntry
+	for _, fixture := range expectedAccounts {
 		entries = append(entries, Entry(
-			fmt.Sprintf("should fetch account %s", fixture.Data.GetID()), fixture.Data.GetID(), fixture.Data))
+			fmt.Sprintf("should fetch account %s", fixture.GetID()), fixture.GetID(), fixture))
 	}
 
 	DescribeTable("fetch account",
@@ -114,6 +115,21 @@ var _ = Describe("Form3Client", func() {
 			Expect(err).Should(HaveOccurred())
 
 			Expect(err).To(BeEquivalentTo(fmt.Errorf(MissingOrInvalidArgumentFmt, "uuid")))
+		})
+	})
+
+	Describe("list accounts", func() {
+		It("should return a list of all accounts", func() {
+			accounts := &api.AccountList{}
+
+			fmt.Println("running list tests")
+
+			err := form3Client.List(context.TODO(), accounts)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			for i := range expectedAccounts {
+				Expect(&accounts.Items[i]).To(BeEquivalentTo((expectedAccounts[i]).(*api.Account)))
+			}
 		})
 	})
 })

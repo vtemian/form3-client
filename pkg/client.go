@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/vtemian/form3/pkg/api"
@@ -28,6 +29,10 @@ type HttpClient struct {
 	RetryCount int
 }
 
+// TODO: implement retry/backoff
+// TODO: implement checks for valid object types
+
+// TODO: handle all errors from upstream
 var RespErrors = map[int]string{
 	http.StatusBadRequest:          "invalid request: %s",
 	http.StatusUnauthorized:        "not authorized: %s",
@@ -112,31 +117,64 @@ func (c *Form3Client) Fetch(ctx context.Context, uuid string, obj api.Object) er
 }
 
 func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
+	// TODO: implement pagination
+
+	v, err := api.EnforcePtr(obj)
+	if err != nil {
+		return err
+	}
+
+	items := v.FieldByName("Items")
+	if !items.IsValid() {
+		return errors.New("invalid object type. missing Items field")
+	}
+
 	endpoint, err := api.Schema.GetEndpointForObj(obj)
 	if err != nil {
 		return err
 	}
 
-	resp, err := http.Get(fmt.Sprintf("%s/%s", c.baseURL(), endpoint))
+	url := fmt.Sprintf("%s/%s", c.baseURL(), endpoint)
+	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 
 	defer resp.Body.Close()
 
-	// TODO: return standard errors
-	if resp.StatusCode != 200 {
-		body, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println(string(body))
-		return errors.New(fmt.Sprintf("missing obj identified by"))
+	if !c.isOK(resp) {
+		return c.err(resp)
 	}
 
-	dataObj := api.WrapObject(obj)
+	objListType := reflect.StructOf([]reflect.StructField{
+		{
+			Name: "Data",
+			Type: items.Type(),
+			Tag:  `json:"data"`,
+		},
+	})
+	objList := reflect.New(objListType).Elem()
+
+	result := objList.Addr().Interface()
 
 	// TODO: extract client logic in a separate pkg
-	parseErr := json.NewDecoder(resp.Body).Decode(&dataObj)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err := json.Unmarshal(bodyBytes, result); err != nil {
+		return err
+	}
 
-	return parseErr
+	data := objList.FieldByName("Data")
+	store := reflect.MakeSlice(items.Type(), data.Len(), data.Len()+1)
+
+	for i := 0; i < data.Len(); i++ {
+		dest := store.Index(i)
+		item := data.Index(i).Interface().(api.Object)
+		dest.Set(reflect.ValueOf(item))
+	}
+
+	items.Set(store)
+
+	return nil
 }
 
 func (c *Form3Client) Create(ctx context.Context) {
