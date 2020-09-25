@@ -253,7 +253,7 @@ var _ = Describe("Form3Client", func() {
 			Expect(*account).To(Equal(*expectedAccount))
 		})
 
-		It("should create a new account", func() {
+		It("should return 400 for invalid body", func() {
 			uuid, err := pseudoUUID()
 			Expect(err).ShouldNot(HaveOccurred())
 
@@ -266,24 +266,14 @@ var _ = Describe("Form3Client", func() {
 						Version: 0,
 					},
 				},
-				Attributes: api.AccountAttributes{
-					Country:               "GB",
-					BaseCurrency:          "GBP",
-					BankID:                "400300",
-					BankIDCode:            "GBDSC",
-					BIC:                   "NWBKGB22",
-					AccountClassification: "Personal",
-				},
+				Attributes: api.AccountAttributes{},
 			}
 
 			err = form3Client.Create(context.TODO(), account)
-			Expect(err).ShouldNot(HaveOccurred())
+			Expect(err).Should(HaveOccurred())
 
-			expectedAccount := api.NewAccount(account.GetID(), account.GetVersion())
-			err = form3Client.Fetch(context.TODO(), expectedAccount)
-			Expect(err).ShouldNot(HaveOccurred())
-
-			Expect(*account).To(Equal(*expectedAccount))
+			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusBadRequest],
+				"validation failure list:\nvalidation failure list:\nvalidation failure list:\naccount_classification in body should be one of [Personal Business]\ncountry in body should match '^[A-Z]{2}$'")))
 		})
 	})
 })
