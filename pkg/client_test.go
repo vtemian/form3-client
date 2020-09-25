@@ -252,5 +252,38 @@ var _ = Describe("Form3Client", func() {
 
 			Expect(*account).To(Equal(*expectedAccount))
 		})
+
+		It("should create a new account", func() {
+			uuid, err := pseudoUUID()
+			Expect(err).ShouldNot(HaveOccurred())
+
+			account := &api.Account{
+				OrganisationResource: api.OrganisationResource{
+					OrganisationID: "721763e9-b2e2-4ebb-8de9-b440e3cf23a6",
+					Resource: api.Resource{
+						Type:    "accounts",
+						ID:      uuid,
+						Version: 0,
+					},
+				},
+				Attributes: api.AccountAttributes{
+					Country:               "GB",
+					BaseCurrency:          "GBP",
+					BankID:                "400300",
+					BankIDCode:            "GBDSC",
+					BIC:                   "NWBKGB22",
+					AccountClassification: "Personal",
+				},
+			}
+
+			err = form3Client.Create(context.TODO(), account)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			expectedAccount := api.NewAccount(account.GetID(), account.GetVersion())
+			err = form3Client.Fetch(context.TODO(), expectedAccount)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(*account).To(Equal(*expectedAccount))
+		})
 	})
 })
