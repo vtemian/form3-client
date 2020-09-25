@@ -101,7 +101,13 @@ func (c *Form3Client) Fetch(ctx context.Context, obj api.Object) error {
 		endpoint = fmt.Sprintf(endpoint, obj.GetID())
 	}
 
-	resp, err := http.Get(fmt.Sprintf("%s/%s", c.baseURL(), endpoint))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/%s", c.baseURL(), endpoint), nil)
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -138,7 +144,13 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 		return err
 	}
 
-	resp, err := http.Get(fmt.Sprintf("%s/%s", c.baseURL(), endpoint))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/%s", c.baseURL(), endpoint), nil)
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -204,7 +216,7 @@ func (c *Form3Client) Create(ctx context.Context, obj api.Object) error {
 	}
 
 	url := fmt.Sprintf("%s/%s", c.baseURL(), endpoint)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonObj))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonObj))
 	if err != nil {
 		return err
 	}
@@ -264,7 +276,7 @@ func (c *Form3Client) Delete(ctx context.Context, obj api.Object) error {
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s?version=%d", c.baseURL(), endpoint, obj.GetVersion()), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/%s?version=%d", c.baseURL(), endpoint, obj.GetVersion()), nil)
 	if err != nil {
 		return err
 	}
