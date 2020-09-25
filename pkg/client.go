@@ -276,7 +276,8 @@ func (c *Form3Client) Delete(ctx context.Context, obj api.Object) error {
 
 	client := &http.Client{}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/%s?version=%d", c.baseURL(), endpoint, obj.GetVersion()), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete,
+		fmt.Sprintf("%s/%s?version=%d", c.baseURL(), endpoint, obj.GetVersion()), nil)
 	if err != nil {
 		return err
 	}
