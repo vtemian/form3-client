@@ -154,7 +154,7 @@ var _ = Describe("Form3Client", func() {
 			err := form3Client.List(context.TODO(), accounts)
 			Expect(err).Should(HaveOccurred())
 
-			Expect(err).To(BeEquivalentTo(InvalidObjectTypeErr))
+			Expect(err).To(BeEquivalentTo(ErrInvalidObjectType))
 		})
 		// TODO: add tests regarding pagination
 	})
@@ -210,7 +210,7 @@ var _ = Describe("Form3Client", func() {
 
 		It("should return missing item for missing version", func() {
 			account := expectedAccounts[1].(*api.Account)
-			account.Version += 1
+			account.Version++
 
 			err := form3Client.Delete(context.TODO(), account)
 			Expect(err).Should(HaveOccurred())
@@ -272,8 +272,8 @@ var _ = Describe("Form3Client", func() {
 			err = form3Client.Create(context.TODO(), account)
 			Expect(err).Should(HaveOccurred())
 
-			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusBadRequest],
-				"validation failure list:\nvalidation failure list:\nvalidation failure list:\naccount_classification in body should be one of [Personal Business]\ncountry in body should match '^[A-Z]{2}$'")))
+			Expect(err.Error()).To(ContainSubstring("invalid request"))
+			Expect(err.Error()).To(ContainSubstring("account_classification in body should be one of [Personal Business]"))
 		})
 	})
 })

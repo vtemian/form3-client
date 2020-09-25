@@ -26,7 +26,7 @@ type Form3Client struct {
 	Version string
 }
 
-type HttpClient struct {
+type HTTPClient struct {
 	RetryCount int
 }
 
@@ -34,6 +34,7 @@ type HttpClient struct {
 // TODO: implement checks for valid object types
 
 // TODO: handle all errors from upstream
+
 var RespErrors = map[int]string{
 	http.StatusBadRequest:          "invalid request: %s",
 	http.StatusUnauthorized:        "not authorized: %s",
@@ -43,7 +44,7 @@ var RespErrors = map[int]string{
 	http.StatusGatewayTimeout:      "gateway timeout %s",
 }
 
-var InvalidObjectTypeErr = errors.New("invalid object type")
+var ErrInvalidObjectType = errors.New("invalid object type")
 
 const MissingOrInvalidArgumentFmt = "missing or invalid argument: %s"
 const DefaultResponseErrorFmt = "error: %s"
@@ -129,7 +130,7 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 
 	items := v.FieldByName("Items")
 	if !items.IsValid() {
-		return InvalidObjectTypeErr
+		return ErrInvalidObjectType
 	}
 
 	endpoint, err := api.Schema.GetEndpointForObj(obj)
@@ -137,8 +138,7 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/%s", c.baseURL(), endpoint)
-	resp, err := http.Get(url)
+	resp, err := http.Get(fmt.Sprintf("%s/%s", c.baseURL(), endpoint))
 	if err != nil {
 		return err
 	}
@@ -162,6 +162,10 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 
 	// TODO: extract client logic in a separate pkg
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
 	if err := json.Unmarshal(bodyBytes, result); err != nil {
 		return err
 	}

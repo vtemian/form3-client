@@ -34,19 +34,19 @@ type Account struct {
 	Attributes AccountAttributes `json:"attributes"`
 }
 
-func (a Account) GetID() string {
+func (a Account) GetID() string { // nolint: gocritic
 	return a.ID
 }
 
-func (a Account) GetVersion() int {
+func (a Account) GetVersion() int { // nolint: gocritic
 	return a.Version
 }
 
-func NewAccount(ID string, version int) *Account {
+func NewAccount(id string, version int) *Account {
 	return &Account{
 		OrganisationResource: OrganisationResource{
 			Resource: Resource{
-				ID:      ID,
+				ID:      id,
 				Version: version,
 			},
 		},

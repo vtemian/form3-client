@@ -82,7 +82,7 @@ func (s *Scheme) GetEndpointForObj(obj interface{}) (string, error) {
 
 var Schema = NewScheme()
 
-func init() {
+func init() { // nolint: gochecknoinits
 	Schema.Register(Account{}, "organisation/accounts/%s")
 	Schema.Register(AccountList{}, "organisation/accounts")
 }
