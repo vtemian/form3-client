@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,6 +18,16 @@ import (
 
 	"github.com/vtemian/form3/pkg/api"
 )
+
+// Note - NOT RFC4122 compliant
+func pseudoUUID() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+
+	return strings.ToLower(fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])), nil
+}
 
 func loadFixture(path string, result *api.DataObject) error {
 	jsonFile, err := os.Open(path)
@@ -82,10 +93,10 @@ var _ = Describe("Form3Client", func() {
 		func(expectedAccount *api.Account) {
 			account := api.NewAccount(expectedAccount.GetID(), expectedAccount.GetVersion())
 
-			err := form3Client.Fetch(context.TODO(), &account)
+			err := form3Client.Fetch(context.TODO(), account)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(&account).To(BeEquivalentTo(expectedAccount))
+			Expect(account).To(BeEquivalentTo(expectedAccount))
 		}, entries...)
 
 	Describe("fetch fails", func() {
@@ -205,6 +216,41 @@ var _ = Describe("Form3Client", func() {
 			Expect(err).Should(HaveOccurred())
 
 			Expect(err).To(BeEquivalentTo(fmt.Errorf(RespErrors[http.StatusNotFound], "invalid version")))
+		})
+	})
+
+	Describe("create account", func() {
+		It("should create a new account", func() {
+			uuid, err := pseudoUUID()
+			Expect(err).ShouldNot(HaveOccurred())
+
+			account := &api.Account{
+				OrganisationResource: api.OrganisationResource{
+					OrganisationID: "721763e9-b2e2-4ebb-8de9-b440e3cf23a6",
+					Resource: api.Resource{
+						Type:    "accounts",
+						ID:      uuid,
+						Version: 0,
+					},
+				},
+				Attributes: api.AccountAttributes{
+					Country:               "GB",
+					BaseCurrency:          "GBP",
+					BankID:                "400300",
+					BankIDCode:            "GBDSC",
+					BIC:                   "NWBKGB22",
+					AccountClassification: "Personal",
+				},
+			}
+
+			err = form3Client.Create(context.TODO(), account)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			expectedAccount := api.NewAccount(account.GetID(), account.GetVersion())
+			err = form3Client.Fetch(context.TODO(), expectedAccount)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(*account).To(Equal(*expectedAccount))
 		})
 	})
 })

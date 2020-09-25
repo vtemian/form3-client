@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,7 +17,7 @@ import (
 type Client interface {
 	Fetch(context.Context, api.Object) error
 	List(context.Context, api.Object) error
-	Create(context.Context)
+	Create(context.Context, api.Object) error
 	Delete(context.Context, api.Object) error
 }
 
@@ -179,8 +180,64 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 	return nil
 }
 
-func (c *Form3Client) Create(ctx context.Context) {
+func (c *Form3Client) Create(ctx context.Context, obj api.Object) error {
+	// TODO: implement a .validate() function
 
+	dataObj := api.WrapObject(obj)
+
+	jsonObj, err := json.Marshal(dataObj)
+	if err != nil {
+		return err
+	}
+
+	endpoint, err := api.Schema.GetEndpointForObj(obj)
+	if err != nil {
+		return err
+	}
+
+	if strings.HasSuffix(endpoint, "%s") {
+		endpoint = endpoint[:len(endpoint)-2]
+	}
+
+	url := fmt.Sprintf("%s/%s", c.baseURL(), endpoint)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonObj))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if !c.isOK(resp) {
+		return c.err(resp)
+	}
+
+	objListType := reflect.StructOf([]reflect.StructField{
+		{
+			Name: "Data",
+			Type: reflect.TypeOf(obj),
+			Tag:  `json:"data"`,
+		},
+	})
+	objList := reflect.New(objListType).Elem()
+	result := objList.Addr().Interface()
+
+	// TODO: extract client logic in a separate pkg
+	parsedErr := json.NewDecoder(resp.Body).Decode(result)
+	if parsedErr != nil {
+		return parsedErr
+	}
+
+	reflect.ValueOf(&obj).Elem().Set(objList.FieldByName("Data"))
+
+	return nil
 }
 
 func (c *Form3Client) Delete(ctx context.Context, obj api.Object) error {

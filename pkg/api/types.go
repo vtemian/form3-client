@@ -42,8 +42,8 @@ func (a Account) GetVersion() int {
 	return a.Version
 }
 
-func NewAccount(ID string, version int) Account {
-	return Account{
+func NewAccount(ID string, version int) *Account {
+	return &Account{
 		OrganisationResource: OrganisationResource{
 			Resource: Resource{
 				ID:      ID,
