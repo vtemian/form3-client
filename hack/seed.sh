@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-HOST=${HOST:-"http://localhost:8080"}
+HOST=${TEST_API_HOST:-"http://localhost:8080"}
 
 echo "Deleting all accounts"
 for id in $(curl -s "${HOST}/v1/organisation/accounts" | jq ".data[] | .id"); do

@@ -80,7 +80,12 @@ func loadFixtures(kind api.Object) []api.Object {
 }
 
 var _ = Describe("Form3Client", func() {
-	form3Client, _ := NewClient("http://localhost:8080")
+	host := os.Getenv("TEST_API_HOST")
+	if host == "" {
+		host = "http://localhost:8080"
+	}
+
+	form3Client, _ := NewClient(host)
 	expectedAccounts := loadFixtures(api.Account{})
 
 	var entries []TableEntry
