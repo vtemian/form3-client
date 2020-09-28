@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -87,27 +88,49 @@ func (c *Form3Client) err(resp *http.Response) error {
 	return fmt.Errorf(respError, errMsg)
 }
 
-func (c *Form3Client) Fetch(ctx context.Context, obj api.Object) error {
-	if obj.GetID() == "" {
-		return fmt.Errorf(MissingOrInvalidArgumentFmt, "uuid")
+func (c *Form3Client) execute(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return nil, err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (c *Form3Client) url(obj api.Object) (string, error) {
 	endpoint, err := api.Schema.GetEndpointForObj(obj)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if strings.Contains(endpoint, "%s") {
 		endpoint = fmt.Sprintf(endpoint, obj.GetID())
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/%s", c.baseURL(), endpoint), nil)
+	url := fmt.Sprintf("%s/%s", c.baseURL(), endpoint)
+
+	return url, nil
+}
+
+func (c *Form3Client) Fetch(ctx context.Context, obj api.Object) error {
+	if obj.GetID() == "" {
+		return fmt.Errorf(MissingOrInvalidArgumentFmt, "uuid")
+	}
+
+	url, err := c.url(obj)
 	if err != nil {
 		return err
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.execute(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
@@ -120,7 +143,6 @@ func (c *Form3Client) Fetch(ctx context.Context, obj api.Object) error {
 
 	dataObj := api.WrapObject(obj)
 
-	// TODO: extract client logic in a separate pkg
 	parseErr := json.NewDecoder(resp.Body).Decode(&dataObj)
 
 	return parseErr
@@ -139,18 +161,12 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 		return ErrInvalidObjectType
 	}
 
-	endpoint, err := api.Schema.GetEndpointForObj(obj)
+	url, err := c.url(obj)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/%s", c.baseURL(), endpoint), nil)
-	if err != nil {
-		return err
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.execute(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
@@ -172,7 +188,6 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 
 	result := objList.Addr().Interface()
 
-	// TODO: extract client logic in a separate pkg
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -197,8 +212,6 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 }
 
 func (c *Form3Client) Create(ctx context.Context, obj api.Object) error {
-	// TODO: implement a .validate() function
-
 	dataObj := api.WrapObject(obj)
 
 	jsonObj, err := json.Marshal(dataObj)
@@ -216,15 +229,7 @@ func (c *Form3Client) Create(ctx context.Context, obj api.Object) error {
 	}
 
 	url := fmt.Sprintf("%s/%s", c.baseURL(), endpoint)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonObj))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.execute(ctx, http.MethodPost, url, bytes.NewBuffer(jsonObj))
 	if err != nil {
 		return err
 	}
@@ -245,7 +250,6 @@ func (c *Form3Client) Create(ctx context.Context, obj api.Object) error {
 	objList := reflect.New(objListType).Elem()
 	result := objList.Addr().Interface()
 
-	// TODO: extract client logic in a separate pkg
 	parsedErr := json.NewDecoder(resp.Body).Decode(result)
 	if parsedErr != nil {
 		return parsedErr
@@ -265,24 +269,13 @@ func (c *Form3Client) Delete(ctx context.Context, obj api.Object) error {
 		return fmt.Errorf(MissingOrInvalidArgumentFmt, "Version")
 	}
 
-	endpoint, err := api.Schema.GetEndpointForObj(obj)
+	url, err := c.url(obj)
 	if err != nil {
 		return err
 	}
 
-	if strings.Contains(endpoint, "%s") {
-		endpoint = fmt.Sprintf(endpoint, obj.GetID())
-	}
-
-	client := &http.Client{}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete,
-		fmt.Sprintf("%s/%s?version=%d", c.baseURL(), endpoint, obj.GetVersion()), nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Do(req)
+	resp, err := c.execute(ctx, http.MethodDelete,
+		fmt.Sprintf("%s?version=%d", url, obj.GetVersion()), nil)
 	if err != nil {
 		return err
 	}
