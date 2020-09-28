@@ -10,19 +10,18 @@ jobs:
       postgres:
         image: postgres:9.5-alpine
         ports:
-          - 5432:5432
-
+            - 5432:5432
       api:
         image: form3tech/interview-accountapi:v1.0.0-4-g63cf8434
         env:
-            VAULT_ADDR: http://vault:8200
+            VAULT_ADDR: http://localhost:8200
             VAULT_TOKEN: 8fb95528-57c6-422e-9722-d2147bcba8ed
             PSQL_USER: root
             PSQL_PASSWORD: password
-            PSQL_HOST: postgresql
+            PSQL_HOST: localhost
             SQL_PORT: 5432
             STACK_NAME: f3-interview-accountapi
-            DATABASE-HOST: postgresql
+            DATABASE-HOST: localhost
             DATABASE-SSL-MODE: disable
             DATABASE-USERNAME: interview_accountapi_user
             DATABASE-PASSWORD: 123
@@ -45,4 +44,4 @@ jobs:
     - run: make check
     - run: make tests
       env:
-          TEST_API_HOST: http://api:8080/
+          TEST_API_HOST: http://localhost:8080/
