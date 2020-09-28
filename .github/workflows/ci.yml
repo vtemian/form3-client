@@ -11,7 +11,7 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.15
-    - run: go mod download
+    - run: ls -la .
       env:
         GO111MODULE: on
     - run: go list -m
