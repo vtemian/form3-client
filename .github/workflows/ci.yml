@@ -12,6 +12,8 @@ jobs:
       with:
         go-version: 1.15
     - run: go mod download
+      env:
+        GO111MODULE: on
     - run: go list -m
     - run: make check
     - run: make tests
