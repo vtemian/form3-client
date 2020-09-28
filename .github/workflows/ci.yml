@@ -46,4 +46,4 @@ jobs:
     - run: make check
     - run: make tests
       env:
-          TEST_API_HOST: http://localhost:${{ job.services.api.ports[8080] }}/
+          TEST_API_HOST: http://localhost:${{ job.services.api.ports[8080] }}

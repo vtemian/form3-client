@@ -13,5 +13,5 @@ for fixture in ./fixtures/fetch_*.json; do
 
   curl -s -X POST "${HOST}/v1/organisation/accounts" \
      --header "Content-Type: application/json" \
-     --data-raw "$(cat $fixture)" > /dev/null || true;
+     --data-raw "$(cat $fixture)" || true;
 done;
