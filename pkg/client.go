@@ -108,6 +108,7 @@ var ErrInvalidObjectType = errors.New("invalid object type")
 const MissingOrInvalidArgumentFmt = "missing or invalid argument: %s"
 const DefaultResponseErrorFmt = "error: %s"
 
+
 type errorResponse struct {
 	ErrorMessage string `json:"error_message"`
 }
@@ -367,6 +368,37 @@ func (c *Form3Client) Delete(ctx context.Context, obj api.Object) error {
 	return nil
 }
 
-func NewClient(baseURL string) (Client, error) {
-	return &Form3Client{BaseURL: baseURL, Version: "v1"}, nil
+type Option func(*Form3Client)
+
+func WithBaseURL(baseURL string) Option {
+	return func(client *Form3Client) {
+		client.BaseURL = baseURL
+	}
+}
+
+func WithVersion(version string) Option {
+	return func(client *Form3Client) {
+		client.Version = version
+	}
+}
+
+func defaultOpts() []Option {
+	return []Option{
+		WithBaseURL("localhost:8080"),
+		WithVersion("v1"),
+	}
+}
+
+func NewClient(opts ...Option) Client {
+	client := &Form3Client{}
+
+	for _, opt := range defaultOpts() {
+		opt(client)
+	}
+
+	for _, opt := range opts {
+		opt(client)
+	}
+
+	return client
 }

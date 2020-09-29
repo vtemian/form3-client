@@ -85,7 +85,7 @@ var _ = Describe("Form3Client", func() {
 		host = "http://localhost:8080"
 	}
 
-	form3Client, _ := NewClient(host)
+	form3Client := NewClient(WithBaseURL(host))
 	expectedAccounts := loadFixtures(api.Account{})
 
 	var entries []TableEntry
