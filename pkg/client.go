@@ -108,7 +108,6 @@ var ErrInvalidObjectType = errors.New("invalid object type")
 const MissingOrInvalidArgumentFmt = "missing or invalid argument: %s"
 const DefaultResponseErrorFmt = "error: %s"
 
-
 type errorResponse struct {
 	ErrorMessage string `json:"error_message"`
 }
