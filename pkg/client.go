@@ -17,7 +17,7 @@ import (
 
 type Client interface {
 	Fetch(context.Context, api.Object) error
-	List(context.Context, api.Object) error
+	List(context.Context, api.Object, *ListOptions) error
 	Create(context.Context, api.Object) error
 	Delete(context.Context, api.Object) error
 }
@@ -27,12 +27,70 @@ type Form3Client struct {
 	Version string
 }
 
-type HTTPClient struct {
-	RetryCount int
+type ListFilter struct {
+	BankIDCode    string
+	BankID        string
+	AccountNumber string
+	IBAN          string
+	CustomerID    string
+	Country       string
+}
+
+func (l *ListFilter) Build() string {
+	query := ""
+
+	if l.BankIDCode != "" {
+		query = fmt.Sprintf("%s&filter[bank_id_code]=%s", query, l.BankIDCode)
+	}
+
+	if l.BankID != "" {
+		query = fmt.Sprintf("%s&filter[bank_id]=%s", query, l.BankID)
+	}
+
+	if l.AccountNumber != "" {
+		query = fmt.Sprintf("%s&filter[account_number]=%s", query, l.AccountNumber)
+	}
+
+	if l.IBAN != "" {
+		query = fmt.Sprintf("%s&filter[iban]=%s", query, l.IBAN)
+	}
+
+	if l.CustomerID != "" {
+		query = fmt.Sprintf("%s&filter[customer_id]=%s", query, l.IBAN)
+	}
+
+	if l.Country != "" {
+		query = fmt.Sprintf("%s&filter[country]=%s", query, l.IBAN)
+	}
+
+	return query
+}
+
+type ListOptions struct {
+	PageNumber int
+	PageSize   int
+	Filter     *ListFilter
+}
+
+func (l *ListOptions) Build() string {
+	query := "?"
+
+	if l.PageNumber != 0 {
+		query = fmt.Sprintf("%s&page[number]=%d", query, l.PageNumber)
+	}
+
+	if l.PageSize != 0 {
+		query = fmt.Sprintf("%s&page[size]=%d", query, l.PageSize)
+	}
+
+	if l.Filter != nil {
+		query = fmt.Sprintf("%s%s", query, l.Filter.Build())
+	}
+
+	return query
 }
 
 // TODO: implement retry/backoff
-// TODO: implement checks for valid object types
 
 // TODO: handle all errors from upstream
 
@@ -148,7 +206,7 @@ func (c *Form3Client) Fetch(ctx context.Context, obj api.Object) error {
 	return parseErr
 }
 
-func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
+func (c *Form3Client) List(ctx context.Context, obj api.Object, listOptions *ListOptions) error {
 	// TODO: implement pagination
 
 	v, err := api.EnforcePtr(obj)
@@ -164,6 +222,10 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object) error {
 	url, err := c.url(obj)
 	if err != nil {
 		return err
+	}
+
+	if listOptions != nil {
+		url = fmt.Sprintf("%s%s", url, listOptions.Build())
 	}
 
 	resp, err := c.execute(ctx, http.MethodGet, url, nil)

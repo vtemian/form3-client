@@ -139,7 +139,7 @@ var _ = Describe("Form3Client", func() {
 		It("should return a list of all accounts", func() {
 			accounts := &api.AccountList{}
 
-			err := form3Client.List(context.TODO(), accounts)
+			err := form3Client.List(context.TODO(), accounts, nil)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			sort.Slice(accounts.Items, func(i, j int) bool {
@@ -156,10 +156,39 @@ var _ = Describe("Form3Client", func() {
 		It("should return an error if the container is not valid", func() {
 			accounts := &api.Account{}
 
-			err := form3Client.List(context.TODO(), accounts)
+			err := form3Client.List(context.TODO(), accounts, nil)
 			Expect(err).Should(HaveOccurred())
 
 			Expect(err).To(BeEquivalentTo(ErrInvalidObjectType))
+		})
+
+		It("should return only one account per page", func() {
+			accounts := &api.AccountList{}
+
+			options := &ListOptions{
+				Filter: &ListFilter{
+					BankID: "400305",
+				},
+				PageNumber: 1,
+				PageSize:   1,
+			}
+			err := form3Client.List(context.TODO(), accounts, options)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(accounts.Items).To(HaveLen(1))
+		})
+
+		It("should return only two accounts per page", func() {
+			accounts := &api.AccountList{}
+
+			options := &ListOptions{
+				PageNumber: 0,
+				PageSize:   2,
+			}
+			err := form3Client.List(context.TODO(), accounts, options)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(accounts.Items).To(HaveLen(2))
 		})
 		// TODO: add tests regarding pagination
 	})
