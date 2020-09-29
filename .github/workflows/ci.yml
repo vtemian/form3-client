@@ -31,7 +31,7 @@ jobs:
             PSQL_HOST: postgres
             SQL_PORT: 5432
             STACK_NAME: f3-interview-accountapi
-            DATABASE-HOST: localhost
+            DATABASE-HOST: postgres
             DATABASE-SSL-MODE: disable
             DATABASE-USERNAME: interview_accountapi_user
             DATABASE-PASSWORD: 123
