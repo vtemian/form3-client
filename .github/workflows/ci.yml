@@ -35,6 +35,8 @@ jobs:
             DATABASE-PASSWORD: 123
         ports:
             - 8080:8080
+        options: >-
+         --entrypoint="sleep 20 && /app/entrypoint.sh"
       vault:
         image: vault:0.9.3
         ports:
