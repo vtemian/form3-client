@@ -9,6 +9,9 @@ jobs:
     services:
       postgres:
         image: postgres:9.5-alpine
+        env:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: password
         ports:
             - 5432/tcp
         options: >-
