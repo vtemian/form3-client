@@ -207,8 +207,6 @@ func (c *Form3Client) Fetch(ctx context.Context, obj api.Object) error {
 }
 
 func (c *Form3Client) List(ctx context.Context, obj api.Object, listOptions *ListOptions) error {
-	// TODO: implement pagination
-
 	v, err := api.EnforcePtr(obj)
 	if err != nil {
 		return err
@@ -228,47 +226,65 @@ func (c *Form3Client) List(ctx context.Context, obj api.Object, listOptions *Lis
 		url = fmt.Sprintf("%s%s", url, listOptions.Build())
 	}
 
-	resp, err := c.execute(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	if !c.isOK(resp) {
-		return c.err(resp)
-	}
-
 	objListType := reflect.StructOf([]reflect.StructField{
 		{
 			Name: "Data",
 			Type: items.Type(),
 			Tag:  `json:"data"`,
 		},
+		{
+			Name: "Links",
+			Type: reflect.TypeOf(api.Links{}),
+			Tag:  `json:"links"`,
+		},
 	})
 	objList := reflect.New(objListType).Elem()
 
-	result := objList.Addr().Interface()
+	results := reflect.MakeSlice(items.Type(), 0, 1)
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
+	for {
+		resp, err := c.execute(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			return err
+		}
+
+		defer resp.Body.Close()
+
+		if !c.isOK(resp) {
+			return c.err(resp)
+		}
+
+		result := objList.Addr().Interface()
+
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		if err := json.Unmarshal(bodyBytes, result); err != nil {
+			return err
+		}
+
+		data := objList.FieldByName("Data")
+		store := reflect.MakeSlice(items.Type(), data.Len(), data.Len()+1)
+
+		for i := 0; i < data.Len(); i++ {
+			dest := store.Index(i)
+			item := data.Index(i).Interface().(api.Object)
+			dest.Set(reflect.ValueOf(item))
+		}
+
+		results = reflect.AppendSlice(results, store)
+
+		links := objList.FieldByName("Links").Interface().(api.Links)
+		if links.Next == "" || links.Next == links.Self {
+			break
+		}
+
+		url = fmt.Sprintf("%s/%s", c.BaseURL, links.Next)
 	}
 
-	if err := json.Unmarshal(bodyBytes, result); err != nil {
-		return err
-	}
-
-	data := objList.FieldByName("Data")
-	store := reflect.MakeSlice(items.Type(), data.Len(), data.Len()+1)
-
-	for i := 0; i < data.Len(); i++ {
-		dest := store.Index(i)
-		item := data.Index(i).Interface().(api.Object)
-		dest.Set(reflect.ValueOf(item))
-	}
-
-	items.Set(store)
+	items.Set(results)
 
 	return nil
 }

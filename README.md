@@ -24,7 +24,21 @@ err := form3Client.Fetch(context.TODO(), account)
 ```go
 // List uses an AccountList that has an Items []Account field
 accounts := &api.AccountList{}
-err := form3Client.List(context.TODO(), accounts)
+err := form3Client.List(context.TODO(), accounts, nil)
+```
+
+```go
+accounts := &api.AccountList{}
+
+// Implement non-generic filtering, as an example
+options := &ListOptions{
+    Filter: &ListFilter{
+        BankID: "400305",
+    },
+    PageNumber: 1,
+    PageSize:   1,
+}
+err := form3Client.List(context.TODO(), accounts, options)
 ```
 
 ```go

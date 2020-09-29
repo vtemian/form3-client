@@ -175,7 +175,7 @@ var _ = Describe("Form3Client", func() {
 			err := form3Client.List(context.TODO(), accounts, options)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(accounts.Items).To(HaveLen(1))
+			Expect(accounts.Items).To(HaveLen(len(expectedAccounts) - 1))
 		})
 
 		It("should return only two accounts per page", func() {
@@ -188,9 +188,8 @@ var _ = Describe("Form3Client", func() {
 			err := form3Client.List(context.TODO(), accounts, options)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(accounts.Items).To(HaveLen(2))
+			Expect(accounts.Items).To(HaveLen(len(expectedAccounts)))
 		})
-		// TODO: add tests regarding pagination
 	})
 
 	Describe("delete account", func() {
