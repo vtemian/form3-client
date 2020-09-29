@@ -13,7 +13,7 @@ jobs:
             POSTGRES_USER: root
             POSTGRES_PASSWORD: password
         ports:
-            - 5432/tcp
+            - 5432:5432
         options: >-
          --health-cmd pg_isready
          --health-interval 10s
@@ -22,23 +22,23 @@ jobs:
       api:
         image: form3tech/interview-accountapi:v1.0.0-4-g63cf8434
         env:
-            VAULT_ADDR: http://localhost:${{ job.services.vault.ports[8200] }}
+            VAULT_ADDR: http://localhost:8200
             VAULT_TOKEN: 8fb95528-57c6-422e-9722-d2147bcba8ed
             PSQL_USER: root
             PSQL_PASSWORD: password
             PSQL_HOST: localhost
-            SQL_PORT: ${{ job.services.postgres.ports[5432] }}
+            SQL_PORT: 5432
             STACK_NAME: f3-interview-accountapi
             DATABASE-HOST: localhost
             DATABASE-SSL-MODE: disable
             DATABASE-USERNAME: interview_accountapi_user
             DATABASE-PASSWORD: 123
         ports:
-            - 8080/tcp
+            - 8080:8080
       vault:
         image: vault:0.9.3
         ports:
-            - 8200/tcp
+            - 8200:8200
         env:
             SKIP_SETCAP: 1
             VAULT_DEV_ROOT_TOKEN_ID: 8fb95528-57c6-422e-9722-d2147bcba8ed
@@ -54,7 +54,7 @@ jobs:
     - run: make check
     - run: make tests
       env:
-          TEST_API_HOST: http://localhost:${{ job.services.api.ports[8080] }}
+          TEST_API_HOST: http://localhost:8080
     - name: Dump docker logs on failure
       if: failure()
       uses: jwalton/gh-docker-logs@v1
