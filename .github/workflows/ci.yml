@@ -55,3 +55,6 @@ jobs:
     - run: make tests
       env:
           TEST_API_HOST: http://localhost:${{ job.services.api.ports[8080] }}
+    - name: Dump docker logs on failure
+      if: failure()
+      uses: jwalton/gh-docker-logs@v1
