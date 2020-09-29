@@ -1,6 +1,18 @@
 version: '3'
 
 services:
+  integration-tests:
+    build:
+      context: .
+      dockerfile: docker/tests/Dockerfile
+    depends_on:
+      - accountapi
+    command: dockerize -wait tcp://accountapi:8080 ./hack/test.sh
+    environment:
+      - TEST_API_HOST=http://accountapi:8080
+    volumes:
+      - .:/app/
+
   accountapi:
     image: form3tech/interview-accountapi:v1.0.0-4-g63cf8434
     restart: on-failure

@@ -78,4 +78,5 @@ more Python like. It was a fun exercise to play with.
 
 I think that end-to-end tests and integration tests are more reliable and broader than unit tests. In order to ensure
 idempotency and isolation, I've used a separate script that cleans the database and load some initial fixtures,
- before running the test suits. 
+ before running the test suits. Also, there is a github action set in order to run the formatting check, linting and 
+ the integration tests.
